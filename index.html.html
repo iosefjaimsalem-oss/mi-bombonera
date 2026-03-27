@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Bombonera">
+<meta name="theme-color" content="#003087">
+<title>Mi Bombonera 🔵🟡</title>
+
+<!-- ÍCONO: PNG real codificado en base64 (azul y dorado, forma de app) -->
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAACXBIWXMAAAsTAAALEwEAmpwYAAAF5klEQVR4nO3BMQEAAADCoPVP7WsIoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeAMBuAABHgAAAABJRU5ErkJggg==">
+
+<!-- PWA Manifest inline -->
+<script>
+const manifest = {
+  name: "Mi Bombonera",
+  short_name: "Bombonera",
+  description: "Mi historial de partidos en La Bombonera",
+  start_url: ".",
+  display: "standalone",
+  background_color: "#003087",
+  theme_color: "#003087",
+  icons: [{
+    src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%23003087'/><rect y='210' width='512' height='80' fill='%23F5C518'/><text x='256' y='185' font-family='Arial Black' font-weight='900' font-size='160' fill='%23F5C518' text-anchor='middle'>B</text><text x='256' y='358' font-family='Arial Black' font-weight='900' font-size='90' fill='%23003087' text-anchor='middle'>BOCA</text></svg>",
+    sizes: "512x512",
+    type: "image/svg+xml"
+  }]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+const manifestURL = URL.createObjectURL(blob);
+document.addEventListener('DOMContentLoaded', () => {
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = manifestURL;
+  document.head.appendChild(link);
+});
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
+<style>
+:root {
+  --blue:#003087;--gold:#F5C518;--dark:#001a4d;
+  --bg:#fff;--bg2:#f5f5f3;--bg3:#eeede8;
+  --text:#1a1a1a;--text2:#6b6b68;--text3:#9b9b98;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --r:10px;--rl:14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{--bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;--border:rgba(255,255,255,0.12);--border2:rgba(255,255,255,0.22)}
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg3);color:var(--text);min-height:100vh}
+.wrap{max-width:640px;margin:0 auto;padding-bottom:80px}
+
+/* HERO */
+.hero{position:relative;height:250px;overflow:hidden}
+.hero img{width:100%;height:100%;object-fit:cover;filter:brightness(0.38) saturate(1.3)}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,24,80,.95) 0%,rgba(0,24,80,.3) 55%,transparent 100%)}
+.hero-cnt{position:absolute;bottom:0;left:0;right:0;padding:1.25rem 1rem 1rem}
+.hero-pill{display:inline-block;background:var(--gold);color:var(--dark);font-size:11px;font-weight:700;padding:3px 12px;border-radius:20px;margin-bottom:8px}
+.hero-title{font-size:25px;font-weight:700;color:#fff;line-height:1.1}
+.hero-sub{font-size:11px;color:rgba(255,255,255,.5);margin-top:4px}
+.hero-tag{position:absolute;top:1rem;right:1rem;background:rgba(0,0,0,.5);border:.5px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,.8)}
+
+/* MAIN */
+.main{background:var(--bg);border-radius:var(--rl) var(--rl) 0 0;margin-top:-16px;position:relative;z-index:1;padding:1.25rem 1rem 1rem}
+
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
+.sc{background:var(--bg2);border-radius:var(--r);padding:.8rem .75rem;border-top:2px solid transparent}
+.sc.b{border-top-color:var(--blue)}.sc.g{border-top-color:var(--gold)}.sc.gr{border-top-color:#1D9E75}.sc.r{border-top-color:#E24B4A}
+.sl{font-size:10px;color:var(--text2);letter-spacing:.05em;margin-bottom:2px}
+.sv{font-size:21px;font-weight:700;color:var(--text);line-height:1}
+.ss{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* TABS */
+.tabs{display:flex;border-bottom:.5px solid var(--border);margin-bottom:1rem;overflow-x:auto}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 15px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-.5px;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.tab.active{color:var(--text);border-bottom-color:var(--blue);font-weight:600}
+
+/* FILTERS */
+.flt{display:flex;gap:6px;margin-bottom:1rem;overflow-x:auto;padding-bottom:2px}
+.flt::-webkit-scrollbar{display:none}
+.fb{padding:6px 14px;border-radius:20px;border:.5px solid var(--border2);background:transparent;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.fb.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* MATCH */
+.ml{display:flex;flex-direction:column;gap:6px}
+.mr{background:var(--bg);border:.5px solid var(--border);border-radius:var(--r);cursor:pointer;overflow:hidden;transition:border-color .15s;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.mr.open{border-color:var(--blue)}
+.mr.ex{border-left:3px solid var(--gold)}
+.mr-top{display:grid;grid-template-columns:76px 1fr auto auto;align-items:center;gap:8px;padding:10px 12px}
+.mdt{font-size:11px;color:var(--text2);line-height:1.35}
+.mrv{font-size:14px;font-weight:600;color:var(--text)}
+.msw{text-align:center}
+.msm{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text);line-height:1.1}
+.msp{font-size:10px;color:var(--text3);margin-top:1px}
+.mex{display:none;padding:10px 12px;border-top:.5px solid var(--border);background:var(--bg2);gap:8px;flex-direction:column}
+.mr.open .mex{display:flex}
+.mxr{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);flex-wrap:wrap}
+.gc{background:#EAF3DE;color:#27500A;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:500}
+@media(prefers-color-scheme:dark){.gc{background:#1a3d1a;color:#7ecf7e}}
+
+/* YT BUTTON */
+.ytb{display:inline-flex;align-items:center;gap:5px;background:#FF0000;color:#fff;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;font-family:inherit;transition:opacity .15s}
+.ytb:hover{opacity:.85}
+.ytb svg{width:13px;height:13px;fill:#fff}
+
+.del{background:transparent;border:.5px solid var(--border);color:var(--text3);border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;margin-left:auto}
+
+/* BADGE */
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.bl{background:#E6F1FB;color:#0C447C}.bb{background:#EAF3DE;color:#27500A}.bs{background:#FAEEDA;color:#633806}
+.bw{background:#EAF3DE;color:#27500A}.bd{background:#f1efe8;color:#444441}.br{background:#FCEBEB;color:#791F1F}
+@media(prefers-color-scheme:dark){
+  .bl{background:#0c2a45;color:#6ab0f5}.bb{background:#1a3d1a;color:#7ecf7e}.bs{background:#3d2a00;color:#f5c842}
+  .bw{background:#1a3d1a;color:#7ecf7e}.bd{background:#3a3a3c;color:#aeaeb2}.br{background:#3d1a1a;color:#f57e7e}
+}
+
+.add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:12px;margin-top:10px;background:transparent;border:1.5px dashed var(--border2);border-radius:var(--r);color:var(--text2);font-size:14px;cursor:pointer;font-family:inherit;transition:all .15s}
+.add-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--bg2)}
+
+/* MODAL */
+.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:flex-end;justify-content:center}
+.mb.open{display:flex}
+.modal{background:var(--bg);border-radius:var(--rl) var(--rl) 0 0;padding:1.25rem 1.25rem 2.5rem;width:100%;max-width:640px;max-height:92vh;overflow-y:auto}
+.mh{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 1rem}
+.modal h3{font-size:17px;font-weight:700;color:var(--text);margin-bottom:1rem}
+.fr{margin-bottom:12px}
+.fr label{display:block;font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:500}
+.fr input,.fr select{width:100%;padding:10px 12px;border-radius:var(--r);border:.5px solid var(--border2);background:var(--bg2);color:var(--text);font-size:15px;font-family:inherit;-webkit-appearance:none;appearance:none}
+.fbtns{display:flex;gap:10px;margin-top:1.25rem}
+.bc{flex:1;padding:13px;border:.5px solid var(--border2);background:var(--bg2);border-radius:var(--r);font-size:15px;cursor:pointer;color:var(--text2);font-family:inherit}
+.bs2{flex:2;padding:13px;background:var(--blue);border:none;border-radius:var(--r);font-size:15px;cursor:pointer;color:#fff;font-weight:700;font-family:inherit}
+
+/* SCORERS */
+.sr{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:.5px solid var(--border)}
+.sr:last-child{border-bottom:none}
+.srk{font-size:16px;font-weight:700;color:var(--text3);width:24px;text-align:center;flex-shrink:0}
+.srk.top{color:var(--gold)}
+.sb{width:36px;height:36px;border-radius:50%;background:var(--blue);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.sn{font-size:14px;font-weight:600;color:var(--text)}
+.sbb{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-top:5px}
+.sbf{height:100%;background:var(--blue);border-radius:2px}
+.sg2{font-size:20px;font-weight:700;color:var(--text);min-width:28px;text-align:right}
+
+/* STATS */
+.st{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.06em;margin-bottom:10px}
+.yr{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.yl{font-size:12px;color:var(--text2);width:36px;flex-shrink:0}
+.bb2{flex:1;background:var(--bg2);border-radius:4px;height:22px;overflow:hidden}
+.bf{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:#fff}
+.sec-g{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:1.5rem}
+.si{background:var(--bg2);border-radius:var(--r);padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.cw{position:relative;width:100%;height:220px;margin-top:.5rem}
+
+/* AVG CARD */
+.avg-card{background:var(--bg2);border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:center;border-left:3px solid var(--gold)}
+.avg-l{font-size:13px;color:var(--text2)}
+.avg-v{font-size:26px;font-weight:700;color:var(--text)}
+.avg-s{font-size:11px;color:var(--text3);margin-top:2px;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/La_Bombonera_llena_%28Boca_Juniors_vs_Banfield%29.jpg/1280px-La_Bombonera_llena_%28Boca_Juniors_vs_Banfield%29.jpg"
+    onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/20170807_La_Bombonera_-_Estadio_Alberto_Jacinto_Armando.jpg/1280px-20170807_La_Bombonera_-_Estadio_Alberto_Jacinto_Armando.jpg'"
+    alt="La Bombonera llena">
+  <div class="hero-grad"></div>
+  <div class="hero-tag">⚽ La Bombonera</div>
+  <div class="hero-cnt">
+    <div class="hero-pill">🔵🟡 Xeneize</div>
+    <div class="hero-title">Mi historial en<br>La Bombonera</div>
+    <div class="hero-sub">Estadio Alberto J. Armando · La Boca, Buenos Aires</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sg" id="sg"></div>
+  <div class="tabs">
+    <div class="tab active" onclick="sTab(this,'p')">Partidos</div>
+    <div class="tab" onclick="sTab(this,'g')">Goleadores</div>
+    <div class="tab" onclick="sTab(this,'s')">Estadísticas</div>
+  </div>
+
+  <div id="tp">
+    <div class="flt" id="flt"></div>
+    <div class="ml" id="ml"></div>
+    <button class="add-btn" onclick="openM()">＋ Agregar partido</button>
+  </div>
+
+  <div id="tg" style="display:none">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Goles de Boca en los partidos que fuiste a la Bombonera.</p>
+    <div id="sl"></div>
+  </div>
+
+  <div id="ts" style="display:none">
+    <div class="avg-card">
+      <div><div class="avg-l">Promedio de goles por partido</div><div class="avg-s" id="avgs"></div></div>
+      <div><div class="avg-v" id="avgv"></div></div>
+    </div>
+    <div class="st">PARTIDOS POR AÑO</div>
+    <div id="yb" style="margin-bottom:1.5rem"></div>
+    <div class="st">SECTOR DONDE VISTE LOS PARTIDOS</div>
+    <div class="sec-g" id="secg"></div>
+    <div class="st">RESULTADOS</div>
+    <div class="cw"><canvas id="pc"></canvas></div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="mb" id="mb" onclick="bgc(event)">
+  <div class="modal">
+    <div class="mh"></div>
+    <h3>Agregar partido</h3>
+    <div class="fr"><label>Rival</label><input type="text" id="fr" placeholder="Ej: River" autocomplete="off"></div>
+    <div class="fr"><label>Resultado (Boca - Rival)</label><input type="text" id="fsc" placeholder="Ej: 2-1" autocomplete="off"></div>
+    <div class="fr"><label>Penales (opcional, ej: 5-4)</label><input type="text" id="fp" placeholder="Solo si hubo penales" autocomplete="off"></div>
+    <div class="fr"><label>Fecha</label><input type="date" id="fd"></div>
+    <div class="fr"><label>Torneo</label>
+      <select id="ft"><option>Liga profesional</option><option>Libertadores</option><option>Sudamérica</option><option>Copa Argentina</option></select>
+    </div>
+    <div class="fr"><label>Sector</label>
+      <select id="fse"><option>Platea media</option><option>Platea baja</option><option>Platea alta</option><option>Preferencial</option><option>Popular</option><option>Palco</option></select>
+    </div>
+    <div class="fr"><label>Goleadores de Boca (separados por coma)</label><input type="text" id="fg" placeholder="Ej: Merentiel, Cavani" autocomplete="off"></div>
+    <div class="fbtns">
+      <button class="bc" onclick="closeM()">Cancelar</button>
+      <button class="bs2" onclick="saveM()">Guardar partido</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATOS BASE (goleadores verificados en ESPN/ESPN AR) ───
+const BASE=[
+  {rival:"Newell's",     score:"0-0",  pen:null, sector:"Platea media", date:"2021-11-30", torneo:"Liga profesional", goals:[]},
+  {rival:"Rosario Central",score:"2-1",pen:null, sector:"Platea baja",  date:"2022-02-20", torneo:"Liga profesional", goals:["Izquierdoz","Fabra"]},
+  {rival:"Huracán",      score:"0-1",  pen:null, sector:"Platea media", date:"2022-03-06", torneo:"Liga profesional", goals:[]},
+  {rival:"Arsenal",      score:"2-2",  pen:null, sector:"Platea media", date:"2022-04-02", torneo:"Liga profesional", goals:["Benedetto","Villa"]},
+  {rival:"Always Ready", score:"2-0",  pen:null, sector:"Platea media", date:"2022-04-12", torneo:"Libertadores",     goals:["Benedetto","Villa"]},
+  {rival:"Defensa y Justicia",score:"2-0",pen:null,sector:"Platea baja",date:"2022-05-10", torneo:"Liga profesional", goals:["Benedetto","Salvio"]},
+  {rival:"Tigre",        score:"3-0",  pen:null, sector:"Córdoba",      date:"2022-05-22", torneo:"Liga profesional", goals:["Benedetto","Villa","Zeballos"]},
+  {rival:"Tigre",        score:"5-3",  pen:null, sector:"Platea baja",  date:"2022-06-15", torneo:"Liga profesional", goals:["Benedetto","Benedetto","Villa","Advíncula","Ramírez J."]},
+  {rival:"Corinthians",  score:"0-0",  pen:"5-6",sector:"Platea media", date:"2022-07-05", torneo:"Libertadores",     goals:[]},
+  {rival:"Estudiantes",  score:"3-1",  pen:null, sector:"Platea media", date:"2022-07-24", torneo:"Liga profesional", goals:["Benedetto","Villa","Zeballos"]},
+  {rival:"Rosario Central",score:"0-0",pen:null, sector:"Platea media", date:"2022-08-17", torneo:"Liga profesional", goals:[]},
+  // Atlético Tucumán 28/8/22 → doblete Langoni (ingresó al ST), Lotti fue el gol de Tucumán
+  {rival:"Atlético Tucumán",score:"2-1",pen:null,sector:"Platea media", date:"2022-08-28", torneo:"Liga profesional", goals:["Langoni","Langoni"]},
+  // vs River 11/9/22 → gol de Benedetto 65'
+  {rival:"River",        score:"1-0",  pen:null, sector:"Platea media", date:"2022-09-11", torneo:"Liga profesional", goals:["Benedetto"]},
+  // vs Independiente 23/10/22 → G.Fernández 34', Villa 50'
+  {rival:"Independiente",score:"2-2",  pen:null, sector:"Platea media", date:"2022-10-23", torneo:"Liga profesional", goals:["G.Fernández","Villa"]},
+  {rival:"Sarmiento",    score:"2-0",  pen:null, sector:"Platea media", date:"2023-07-02", torneo:"Liga profesional", goals:["Medina","Merentiel"]},
+  {rival:"Newell's",     score:"2-1",  pen:null, sector:"Platea media", date:"2023-07-24", torneo:"Liga profesional", goals:["Medina","Merentiel"]},
+  {rival:"Nacional",     score:"2-2",  pen:"4-2",sector:"Platea alta",  date:"2023-08-09", torneo:"Libertadores",     goals:["Merentiel","Medina"]},
+  {rival:"Racing",       score:"0-0",  pen:null, sector:"Platea alta",  date:"2023-08-23", torneo:"Libertadores",     goals:[]},
+  // vs Belgrano 3/3/24 → hat-trick Cavani (63' pen, 73', 79')
+  {rival:"Belgrano",     score:"3-2",  pen:null, sector:"Platea baja",  date:"2024-03-03", torneo:"Liga profesional", goals:["Cavani","Cavani","Cavani"]},
+  {rival:"Trinidense",   score:"1-0",  pen:null, sector:"Platea media", date:"2024-04-09", torneo:"Sudamérica",       goals:["Cavani"]},
+  {rival:"Talleres",     score:"0-0",  pen:null, sector:"Preferencial", date:"2024-05-25", torneo:"Liga profesional", goals:[]},
+  {rival:"Nacional Potosí",score:"4-0",pen:null, sector:"Platea alta",  date:"2024-05-29", torneo:"Sudamérica",       goals:["Cavani","Merentiel","Medina","Zenón"]},
+  {rival:"Banfield",     score:"3-0",  pen:null, sector:"Platea media", date:"2024-08-01", torneo:"Liga profesional", goals:["Merentiel","Cavani","Medina"]},
+  {rival:"Barracas Central",score:"1-1",pen:null,sector:"Platea media", date:"2024-08-04", torneo:"Liga profesional", goals:["Merentiel"]},
+  {rival:"Cruzeiro",     score:"1-0",  pen:null, sector:"Platea alta",  date:"2024-08-15", torneo:"Sudamérica",       goals:["Merentiel"]},
+  {rival:"San Lorenzo",  score:"3-2",  pen:null, sector:"Platea media", date:"2024-08-18", torneo:"Liga profesional", goals:["Aguirre","Medina","Merentiel"]},
+  {rival:"Rosario Central",score:"2-1",pen:null, sector:"Platea baja",  date:"2024-08-31", torneo:"Liga profesional", goals:["Lema","Aguirre"]},
+  {rival:"Deportivo Riestra",score:"1-1",pen:null,sector:"Platea media",date:"2024-09-27", torneo:"Liga profesional", goals:["Zenón"]},
+  {rival:"Unión",        score:"1-0",  pen:null, sector:"Platea alta",  date:"2024-11-20", torneo:"Liga profesional", goals:["Zenón"]},
+  {rival:"Gimnasia",     score:"1-0",  pen:null, sector:"Platea media", date:"2024-12-01", torneo:"Liga profesional", goals:["Merentiel"]},
+  {rival:"Barracas Central",score:"1-0",pen:null,sector:"Platea media", date:"2025-04-06", torneo:"Liga profesional", goals:["Battaglia"]},
+  {rival:"Instituto",    score:"2-0",  pen:null, sector:"Platea alta",  date:"2026-03-22", torneo:"Liga profesional", goals:["Aranda","Bareiro"]},
+];
+
+let matches=[],ci=null,af='Todos';
+
+const gex=()=>{try{return JSON.parse(localStorage.getItem('boca-x')||'[]')}catch(e){return[]}};
+const sex=(a)=>{try{localStorage.setItem('boca-x',JSON.stringify(a))}catch(e){}};
+const load=()=>{matches=[...BASE,...gex()].sort((a,b)=>a.date.localeCompare(b.date))};
+const isX=(m)=>!BASE.find(b=>b.date===m.date&&b.rival===m.rival);
+
+function getR(m){
+  const s=m.score.replace(/\(.*\)/,'').trim().split('-');
+  if(s.length<2)return'D';
+  const[a,b]=[parseInt(s[0]),parseInt(s[1])];
+  if(a>b)return'W';if(a<b)return'L';
+  if(m.pen){const p=m.pen.split('-');if(p.length===2)return parseInt(p[0])>parseInt(p[1])?'W':'L';}
+  return'D';
+}
+const fd=(d)=>{try{return new Date(d+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'2-digit'})}catch(e){return d}};
+const tc=(t)=>t==='Liga profesional'?'bl':t==='Libertadores'?'bb':'bs';
+const ini=(n)=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const yt=(r,d)=>`https://www.youtube.com/results?search_query=${encodeURIComponent(`Boca vs ${r} ${d.slice(0,4)} resumen ESPN`)}`;
+
+function rStats(ms){
+  const w=ms.filter(m=>getR(m)==='W').length,d=ms.filter(m=>getR(m)==='D').length,l=ms.filter(m=>getR(m)==='L').length;
+  const g=ms.reduce((a,m)=>a+m.goals.length,0);
+  document.getElementById('sg').innerHTML=`
+    <div class="sc b"><div class="sl">PARTIDOS</div><div class="sv">${ms.length}</div><div class="ss">en la cancha</div></div>
+    <div class="sc g"><div class="sl">GANADOS</div><div class="sv" style="color:#27500A">${w}</div><div class="ss">${ms.length?Math.round(w/ms.length*100):0}%</div></div>
+    <div class="sc gr"><div class="sl">GOLES</div><div class="sv">${g}</div><div class="ss">de Boca</div></div>
+    <div class="sc r"><div class="sl">PERDIDOS</div><div class="sv" style="color:#791F1F">${l}</div><div class="ss">${d} emp.</div></div>`;
+}
+
+function rFlt(){
+  document.getElementById('flt').innerHTML=['Todos','Liga profesional','Libertadores','Sudamérica']
+    .map(t=>`<button class="fb ${t===af?'active':''}" onclick="setF('${t}')">${t}</button>`).join('');
+}
+
+function scoreH(m){
+  return m.pen
+    ?`<div class="msw"><div class="msm">${m.score}</div><div class="msp">pen. ${m.pen}</div></div>`
+    :`<div class="msw"><div class="msm">${m.score}</div></div>`;
+}
+
+function rMatches(f){
+  const fm=f==='Todos'?[...matches]:matches.filter(m=>m.torneo===f||(f==='Sudamérica'&&m.torneo==='Sudamericana'));
+  const sorted=[...fm].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('ml').innerHTML=sorted.map(m=>{
+    const r=getR(m);const rC=r==='W'?'bw':r==='L'?'br':'bd';const rT=r==='W'?'Ganó':r==='L'?'Perdió':'Empató';
+    const x=isX(m);
+    const gh=m.goals.length
+      ?`<span style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span>⚽</span>${m.goals.map(g=>`<span class="gc">${g}</span>`).join('')}</span>`
+      :`<span style="color:var(--text3)">Sin goles</span>`;
+    const del=x?`<button class="del" onclick="delM('${m.date}','${m.rival.replace(/'/g,"\\'")}');event.stopPropagation()">Eliminar</button>`:'';
+    return`<div class="mr${x?' ex':''}" onclick="this.classList.toggle('open')">
+      <div class="mr-top">
+        <span class="mdt">${fd(m.date)}</span>
+        <span class="mrv">${m.rival}</span>
+        ${scoreH(m)}
+        <span class="badge ${rC}">${rT}</span>
+      </div>
+      <div class="mex">
+        <div class="mxr">
+          <span class="badge ${tc(m.torneo)}">${m.torneo}</span>
+          <span style="color:var(--text3)">·</span><span>📍 ${m.sector}</span>${del}
+        </div>
+        <div class="mxr">${gh}</div>
+        <div class="mxr">
+          <a class="ytb" href="${yt(m.rival,m.date)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">
+            <svg viewBox="0 0 24 24"><path d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.54 3.5 12 3.5 12 3.5s-7.54 0-9.38.55A3.02 3.02 0 00.5 6.19C0 8.04 0 12 0 12s0 3.96.5 5.81a3.02 3.02 0 002.12 2.14C4.46 20.5 12 20.5 12 20.5s7.54 0 9.38-.55a3.02 3.02 0 002.12-2.14C24 15.96 24 12 24 12s0-3.96-.5-5.81zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/></svg>
+            Ver resumen
+          </a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setF(f){af=f;const fm=f==='Todos'?matches:matches.filter(m=>m.torneo===f||(f==='Sudamérica'&&m.torneo==='Sudamericana'));rStats(fm);rFlt();rMatches(f)}
+
+function rScorers(){
+  const cnt={};matches.forEach(m=>m.goals.forEach(g=>{cnt[g]=(cnt[g]||0)+1}));
+  const s=Object.entries(cnt).sort((a,b)=>b[1]-a[1]);const mx=s[0]?s[0][1]:1;
+  document.getElementById('sl').innerHTML=s.map(([n,g],i)=>`
+    <div class="sr">
+      <div class="srk ${i<3?'top':''}">${i+1}</div>
+      <div class="sb">${ini(n)}</div>
+      <div style="flex:1"><div class="sn">${n}</div><div class="sbb"><div class="sbf" style="width:${Math.round(g/mx*100)}%"></div></div></div>
+      <div class="sg2">${g}</div>
+    </div>`).join('');
+}
+
+function rYears(){
+  const by={};matches.forEach(m=>{const y=m.date.slice(0,4);by[y]=(by[y]||0)+1});
+  const mx=Math.max(...Object.values(by));
+  const cols={'2021':'#003087','2022':'#185FA5','2023':'#0F6E56','2024':'#1D9E75','2025':'#BA7517','2026':'#993556'};
+  document.getElementById('yb').innerHTML=Object.entries(by).sort().map(([y,c])=>
+    `<div class="yr"><span class="yl">${y}</span><div class="bb2"><div class="bf" style="width:${Math.round(c/mx*100)}%;background:${cols[y]||'#003087'}">${c}</div></div></div>`
+  ).join('');
+}
+
+function rSectors(){
+  const s={};matches.forEach(m=>{s[m.sector]=(s[m.sector]||0)+1});
+  document.getElementById('secg').innerHTML=Object.entries(s).sort((a,b)=>b[1]-a[1])
+    .map(([sec,c])=>`<div class="si"><span style="font-size:13px">${sec}</span><span style="font-size:13px;font-weight:600;color:var(--text2)">${c}x</span></div>`).join('');
+}
+
+function rAvg(){
+  const total=matches.reduce((a,m)=>a+m.goals.length,0);
+  const avg=matches.length?total/matches.length:0;
+  document.getElementById('avgv').textContent=avg.toFixed(1);
+  document.getElementById('avgs').textContent=`${total} goles en ${matches.length} partidos`;
+}
+
+function rChart(){
+  if(ci)ci.destroy();
+  const w=matches.filter(m=>getR(m)==='W').length,d=matches.filter(m=>getR(m)==='D').length,l=matches.filter(m=>getR(m)==='L').length;
+  const dk=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  ci=new Chart(document.getElementById('pc'),{
+    type:'doughnut',
+    data:{labels:[`Ganados (${w})`,`Empatados (${d})`,`Perdidos (${l})`],datasets:[{data:[w,d,l],backgroundColor:['#1D9E75','#888780','#E24B4A'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{color:dk?'#aeaeb2':'#6b6b68',font:{size:12},padding:16,usePointStyle:true}}}}
+  });
+}
+
+function rAll(){
+  const fm=af==='Todos'?matches:matches.filter(m=>m.torneo===af||(af==='Sudamérica'&&m.torneo==='Sudamericana'));
+  rStats(fm);rFlt();rMatches(af);rScorers();rYears();rSectors();rAvg();
+}
+
+function sTab(el,tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  ['p','g','s'].forEach(t=>{document.getElementById('t'+t).style.display=t===tab?'block':'none'});
+  if(tab==='s')rChart();
+}
+
+function openM(){document.getElementById('mb').classList.add('open')}
+function closeM(){document.getElementById('mb').classList.remove('open')}
+function bgc(e){if(e.target===document.getElementById('mb'))closeM()}
+
+function saveM(){
+  const rival=document.getElementById('fr').value.trim();
+  const score=document.getElementById('fsc').value.trim();
+  const pen=document.getElementById('fp').value.trim()||null;
+  const date=document.getElementById('fd').value;
+  const torneo=document.getElementById('ft').value;
+  const sector=document.getElementById('fse').value;
+  const gr=document.getElementById('fg').value.trim();
+  if(!rival||!score||!date){alert('Completá rival, resultado y fecha.');return}
+  const goals=gr?gr.split(',').map(g=>g.trim()).filter(Boolean):[];
+  const extras=gex();extras.push({rival,score,pen,date,torneo,sector,goals});
+  sex(extras);load();closeM();
+  ['fr','fsc','fp','fd','fg'].forEach(id=>document.getElementById(id).value='');
+  rAll();
+}
+
+function delM(date,rival){
+  if(!confirm('¿Eliminar este partido?'))return;
+  sex(gex().filter(m=>!(m.date===date&&m.rival===rival)));load();rAll();
+}
+
+load();rAll();
+</script>
+</body>
+</html>
