@@ -1,0 +1,19 @@
+{
+  "name": "Mi Bombonera",
+  "short_name": "Bombonera",
+  "description": "Mi historial de partidos en La Bombonera",
+  "start_url": "/mi-bombonera/",
+  "scope": "/mi-bombonera/",
+  "display": "standalone",
+  "background_color": "#003087",
+  "theme_color": "#003087",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
